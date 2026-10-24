@@ -1,0 +1,24 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
