@@ -106,17 +106,9 @@ public class OpdBillingController : BaseApiController
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetOpdInvoicesByDate([FromQuery] string? date)
     {
-        DateTime targetDate;
-        if (string.IsNullOrWhiteSpace(date))
+        if (!TryParseFlexibleDate(date, out var targetDate))
         {
-            targetDate = DateTime.UtcNow.Date;
-        }
-        else
-        {
-            if (!DateTime.TryParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out targetDate))
-            {
-                return BadRequest(ApiResponse<object>.Fail("Invalid date format. Please provide date in 'yyyy-MM-dd' format."));
-            }
+            return BadRequest(ApiResponse<object>.Fail("Invalid date format. Accepted formats include: 'yyyy-MM-dd' (e.g., 2026-10-24) or 'dd-MM-yyyy' (e.g., 24-10-2026)."));
         }
 
         var startOfDay = targetDate.Date;
@@ -147,5 +139,28 @@ public class OpdBillingController : BaseApiController
             .ToListAsync();
 
         return Ok(ApiResponse<List<OpdInvoiceResponse>>.Ok(invoices, $"Found {invoices.Count} OPD invoices for {startOfDay:yyyy-MM-dd}."));
+    }
+
+    private static bool TryParseFlexibleDate(string? input, out DateTime parsedDate)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            parsedDate = DateTime.UtcNow.Date;
+            return true;
+        }
+
+        string[] formats =
+        {
+            "yyyy-MM-dd", "dd-MM-yyyy", "MM-dd-yyyy",
+            "yyyy/MM/dd", "dd/MM/yyyy", "MM/dd/yyyy",
+            "yyyy.MM.dd", "dd.MM.yyyy", "yyyyMMdd"
+        };
+
+        if (DateTime.TryParseExact(input.Trim(), formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate))
+        {
+            return true;
+        }
+
+        return DateTime.TryParse(input.Trim(), CultureInfo.InvariantCulture, DateTimeStyles.None, out parsedDate);
     }
 }
